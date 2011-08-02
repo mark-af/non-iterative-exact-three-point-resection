@@ -1,0 +1,121 @@
+
+				Exact Three Point Resection
+
+	Assuming a pinhole camera model and given three points which are not co-linear in either the object space or the image space we can model the camera using base equation:
+
+	dot_product(rotation_matrix,scale* image_point) + pinhole_position == object_point
+
+	Taking into account the three points we will have eighteen knows values. Three three vectors each for the image and object points. There are seven unknowns nine unknowns the three vector of  the pinhole position, three scale values and three generators for the rotation matrix. There nine equations, three for each point. I am simplifying the spelling for compactness sake.
+
+eq1
+	dot(rotation,scale[1]*image[1])+pinhole==object[1]
+eq2
+	dot(rotation,scale[2]*image[2])+pinhole==object[2]
+eq3
+	dot(rotation,scale[2]*image[2])+pinhole==object[3]
+
+		The Solution: Part 1
+
+	The first step is to subtract out the pinhole position eq2-eq3, eq3-eq1 and eq1-eq2 we have nine new equations that do not depend on the pinhole position. 
+        If we then equate the dot products of both sides of the three difference equations we get the the following:
+
+eq4
+	dot(scale[2]*image[2]-scale[3]*image[3],
+	 scale[2]*image[2]-scale[3]*image[3])==dot(object[2]-object[3],object[2]-object[3])
+eq5
+	dot(scale[3]*image[3]-scale[1]*image[1],
+	 scale[3]*image[3]-scale[1]*image[1])==dot(object[3]-object[1],object[3]-object[1])
+eq6
+	dot(scale[1]*image[1]-scale[2]*image[2],
+	 scale[1]*image[1]-scale[2]*image[2])==dot(object[1]-object[2],object[1]-object[2])
+
+	We can always combine the three equations in at least two ways that eliminates the right hand side of the equations. For example:
+
+eq7
+	dot(scale[3]*image[3]-scale[1]*image[1])*dot(object[1]-object[2])-
+	 dot(scale[1]*image[1]-scale[2]*image[2])*dot(object[3]-object[1])==0
+eq8
+	dot(scale[1]*image[1]-scale[2]*image[2])*dot(object[2]-object[3])-
+	 dot(scale[2]*image[2]-scale[3]*image[3])*dot(object[1]-object[2])==0
+
+ 	Both equations will depend on all three scale values in an essential way. 
+        However we can always find three values of eigenvalue such that eq7+ eigenvalue*eq8 (eq9) independent of at least one linear combination of the scales i.e. degenerate. 
+        The best way I know to find eigenvalue is to represent eq9 as a symmetric matrix and take the determinate. The matrix elements are such that:
+
+
+eq10
+	element[1][1]*scale[1]*scale[1]+element[2][2]*scale[2]*scale[2]+
+	 element[3][3]*scale[3]*scale[3]+2*element[1][2]*scale[1]*scale[2]+
+	 2*element[3][1]*scale[3]*scale[1]+2*element[2][3]*scale[2]*scale[3]==eq9
+
+	The determinate of the matrix is a cubic equation on eigenvalue which usually has three solutions. 
+        Using these three solutions we can get three matrices each of which is independent of a particular eigenvector. 
+        The eigenvectors magnitude are initially unknown but by applying a linear combination of the eigenvectors to each of three degenerate equations we can define the magnitude of two of the eigenvectors in terms of the third. 
+        By apply I mean the following transformation of the scale variables:
+
+tn1
+	scale[1]->mag1*eigenvector1[1]+mag2*eigenvector2[1]+mag3*eigenvector3[1]
+	scale[2]->mag1*eigenvector1[2]+mag2*eigenvector2[2]+mag3*eigenvector3[2]
+	scale[3]->mag1*eigenvector1[3]+mag2*eigenvector2[3]+mag3*eigenvector3[3]
+
+	Having found two of the magnitudes using the degenerate equations we can get the third by applying the tn1 to eq7 or eq8. 
+        In these results mag1, mag2 and mag3 appear as perfect squares so there are actually 8 scale threetuples resulting from changing alternating the signs. 
+        I discard those with complex values.
+
+		The Solution:  Part 2
+
+	For each scale threetuple we can define a new number from the image points:
+
+tn2
+	scale[1]*image[1]->Simage[1]
+	scale[2]*image[2]->Simage[2]
+	scale[3]*image[3]->Simage[3]
+
+	Applying this to eq1, eq2 and eq3 then taking the differences as before we get the following nine equations:
+
+eq11
+	rotation.(Simage[2]-Simage[3])==object[2]-object[3]
+eq12
+	rotation.(Simage[3]-Simage[1])==object[3]-object[1]
+eq13
+	rotation.(Simage[1]-Simage[2])==object[1]-object[2]
+
+	If  we dot product the rotation matrix by its generator the result is the generator. Do this to eq11, eq12 and eq13 we get:
+
+eq14
+	dot(generator,(Simage[2]-Simage[3]))==dot(generator,(object[2]-object[3]))
+eq15
+	dot(generator,(Simage[3]-Simage[1]))==dot(generator,(object[3]-object[1]))
+eq16
+	dot(generator,(Simage[1]-Simage[2]))==dot(generator,(object[1]-object[2]))
+
+	Generally this has only a trivial solution i.e. the three generators are all zero. But due to the results from Part 1 there is at least one non-trivial solution. 
+        The rotation matrix is constructed from the generator as first recasting the generator as a matrix:
+
+eq17
+		  {{0,generator[3],-generator[2]},
+	genmat=  {-generator[3],0,generator[1]},
+		   {generator[2],-generator[1],0}}
+eq18
+	rotation=three_by_three_Identity_Matrix+genmat*unknow1+dot(genmat,genmat)*unknown2
+
+	Actually unknown2 can be calculated from unknown1 but in this case it is unnecessary. 
+        Applying eq18 to eq11, eq12 and eq13 then solve for unknown1 and unknown2. 
+        Putting those into eq18 gives the complete rotation matrix. There are up to eight rotation matrices, one for each scale threetuple.
+
+	The Solution: Part 3
+
+	Applying the results from Part 1 and 2 to eq1, eq2 and eq3 we can solve for the pinhole position. 
+        As with the rotation matrix there are up to eight vector each of which depends on the particular scale threetuple and rotation matrix being taken together properly.
+
+	Applying the solution(s)
+
+	The scale threetuples can not be used when projecting an arbitrary image point into object space. The scale in the base equation most be determined by some other means.
+        At this time as best I can determine which solution to use requires addition data. Except of course that the complex scale threetuples are physically meaningless.
+
+
+				Notes
+
+	Generally eq9 may admit only 2 or even 1 solution. Similarly eq14 - eq16 may have 2 non-trivial solutions. Neither of these cases should ever arise in real photogrammetry. The rules of projective geometry guaranty this. However the pinhole model does not exactly describe a real camera. There can be errors in imager alignment and pincushion/barrel distortion. Therefore care should be taken to gather accurate data and avoid even approximate co-linearity.
+
+	In particular the image data must be matched with a good approximation of the focal length of the same dimension i.e. don't mix pixels and meters.	
